@@ -731,6 +731,10 @@
       {
         "command": "todo.editorArchive",
         "title": "Archive"
+      },
+      {
+        "command": "todo.exportHtml",
+        "title": "Export to HTML"
       }
     ],
     "keybindings": [
@@ -865,6 +869,10 @@
         {
           "command": "todo.editorArchive",
           "when": "false"
+        },
+        {
+          "command": "todo.exportHtml",
+          "when": "false"
         }
       ],
       "editor/context": [
@@ -891,6 +899,11 @@
         {
           "command": "todo.editorArchive",
           "group": "todo@5",
+          "when": "editorTextFocus && editorLangId == todo"
+        },
+        {
+          "command": "todo.exportHtml",
+          "group": "todo@6",
           "when": "editorTextFocus && editorLangId == todo"
         }
       ],

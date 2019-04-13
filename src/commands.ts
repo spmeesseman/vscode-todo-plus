@@ -184,6 +184,221 @@ function archive () {
 
 }
 
+function exportHtml () {
+
+  const textEditor = vscode.window.activeTextEditor;
+  const doc = new Document ( textEditor.document );
+               
+  let content = '<html><head></head><body>\n';
+  let obj = doc.getLines();
+
+  let lines = obj[0].textEditor._documentData._lines;
+
+  for (let i = 0; i < lines.length; i++) {
+
+    let line: string = lines[i];
+    let fmtd: any = false;
+    let idx: number;
+
+    if ( Consts.regexes.comment.test( line ) ) {
+      continue;
+    }
+    else if ( Consts.regexes.project.test( line ) ) {
+
+      fmtd = true;
+      line = '<font color="' + Consts.colors.project + '">\n' + line;
+    }
+    else {
+
+      if ( Consts.regexes.todoCancelled.test( line ) ) {
+        fmtd = true;
+        line = '<font color="#f92672">\n' + line;
+      }
+      else if ( Consts.regexes.todoDone.test( line ) ) {
+        fmtd = true;
+        line = '<font color="#a6e25b">\n' + line;
+      }
+
+      //Consts.colors.tags.background[0]
+
+      let regexResult = Consts.regexes.tagCreated.exec( line );
+      if (regexResult) {
+        idx = line.indexOf(')', regexResult.index + 1) + 1;
+        if (idx === 0) {
+          idx = line.length;
+        }
+        if (fmtd === 1) {
+          let idx2 = line.indexOf('</font>');
+          if (regexResult.index < idx2) {
+            fmtd = true;
+            line = line.replace('</font>', '');
+          }
+        }
+        line = line.substring(0, regexResult.index + 1) + (fmtd === true ? '</font>' : '') + 
+              '<font style="background-color:' + Consts.colors.tag + '">\n' + 
+              line.substring(regexResult.index, idx) + '</font>' +  (idx !== line.length ? line.substring(idx) : '');
+        
+        if (fmtd === true) {
+          fmtd = 1;
+        };
+      }
+
+      regexResult = Consts.regexes.tagStarted.exec( line );
+      if (regexResult) {
+        idx = line.indexOf(')', regexResult.index + 1) + 1;
+        if (idx === 0) {
+          idx = line.length;
+        }
+        if (fmtd === 1) {
+          let idx2 = line.indexOf('</font>');
+          if (regexResult.index < idx2) {
+            fmtd = true;
+            line = line.replace('</font>', '');
+          }
+        }
+        line = line.substring(0, regexResult.index + 1) + (fmtd === true ? '</font>' : '') + 
+              '<font style="background-color:' + Consts.colors.tag + '">\n' + 
+              line.substring(regexResult.index, idx) + '</font>' +  (idx !== line.length ? line.substring(idx) : '');
+        
+        if (fmtd === true) {
+          fmtd = 1;
+        }
+      }
+
+      regexResult = Consts.regexes.tagFinished.exec( line );
+      if (regexResult) {
+        idx = line.indexOf(')', regexResult.index + 1) + 1;
+        if (idx === 0) {
+          idx = line.length;
+        }
+        if (fmtd === 1) {
+          let idx2 = line.indexOf('</font>');
+          if (regexResult.index < idx2) {
+            fmtd = true;
+            line = line.replace('</font>', '');
+          }
+        }
+        line = line.substring(0, regexResult.index + 1) + (fmtd === true ? '</font>' : '') + 
+              '<font style="background-color:' + Consts.colors.tag + '">\n' + 
+              line.substring(regexResult.index, idx) + '</font>' +  (idx !== line.length ? line.substring(idx) : '');
+        
+        if (fmtd === true) {
+          fmtd = 1;
+        }
+      }
+      
+      regexResult = Consts.regexes.tagElapsed.exec( line );
+      if (regexResult) {
+        idx = line.indexOf(')', regexResult.index + 1) + 1;
+        if (idx === 0) {
+          idx = line.length;
+        }
+        if (fmtd === 1) {
+          let idx2 = line.indexOf('</font>');
+          if (regexResult.index < idx2) {
+            fmtd = true;
+            line = line.replace('</font>', '');
+          }
+        }
+        line = line.substring(0, regexResult.index + 1) + (fmtd === true ? '</font>' : '') + 
+              '<font style="background-color:' + Consts.colors.tag + '">\n' + 
+              line.substring(regexResult.index, idx) + '</font>' +  (idx !== line.length ? line.substring(idx) : '');
+        
+        if (fmtd === true) {
+          fmtd = 1;
+        }
+      }
+
+      regexResult = Consts.regexes.tagEstimate.exec( line );
+      if (regexResult) {
+        idx = line.indexOf(' ', regexResult.index);
+        if (fmtd === 1) {
+          let idx2 = line.indexOf('</font>');
+          if (regexResult.index < idx2) {
+            fmtd = true;
+            line = line.replace('</font>', '');
+          }
+        }
+        if (idx !== -1) {
+          line = line.substring(0, regexResult.index) + (fmtd === true ? '</font>' : '') + 
+                '<font style="background-color:' + Consts.colors.tag + '">' + 
+                line.substring(regexResult.index - 1, idx) + '</font>\n' + line.substring(idx);
+        }
+        else {
+          line = line.substring(0, regexResult.index) + (fmtd === true ? '</font>' : '') + 
+                '<font style="background-color:' + Consts.colors.tag + '">' + 
+                line.substring(regexResult.index - 1) + '</font>\n';
+        }
+        if (fmtd === true) {
+          fmtd = 1;
+        }
+      }
+
+      // This regex does not work, there is a timing issue
+      //regexResult = Consts.regexes.tagEstimate.exec( line );
+      //regexResult = Consts.regexes.tagSpecialNormal.exec( line );
+      let specialTagExists = line.indexOf('@low');
+      if (specialTagExists === -1) {
+        specialTagExists = line.indexOf('@medium');
+      }
+      if (specialTagExists === -1) {
+        specialTagExists = line.indexOf('@high');
+      }
+      if (specialTagExists === -1) {
+        specialTagExists =  line.indexOf('@critical');
+      }
+      if (specialTagExists !== -1) {
+        let tagIdx = 0;
+        let tagNames = Consts.tags.names;
+        idx = line.indexOf(' ', specialTagExists + 1);
+        if (idx === -1) {
+          idx = line.length;
+        }
+        let tagName;
+        if (idx !== -1) {
+          tagName = line.substring(specialTagExists + 1, idx).trim();
+        }
+        else {
+          tagName = line.substring(specialTagExists + 1).trim();
+        }
+        for (let i = 0; i < tagNames.length; i++) {
+          
+          console.log(tagName + '=' + tagNames[i]);
+          if (tagName === tagNames[i]) {
+            tagIdx = i;
+            break;
+          }
+        }
+        if (fmtd === 1) {
+          let idx2 = line.indexOf('</font>');
+          if (specialTagExists < idx2) {
+            fmtd = true;
+            line = line.replace('</font>', '');
+          }
+        }
+        line = line.substring(0, specialTagExists) + (fmtd === true ? '</font>' : '') + 
+                '<font style="background-color:' + Consts.colors.tags.background[tagIdx] + '">\n' + 
+                line.substring(specialTagExists, idx) + '</font>' +  line.substring(idx);
+        if (fmtd === true) {
+          fmtd = 1;
+        }
+      }
+    }
+
+    content += line;
+
+    if (fmtd === true) {
+      content += '\n</font>';
+    }
+    content += '\n<br>\n';
+  }
+
+  content += '</body></html>\n';
+  content = content.replace(/  /g, '&nbsp;&nbsp;');
+  
+  Utils.editor.open ( content );
+}
+
 /* VIEW */
 
 function viewOpenFile ( file: ItemFile ) {
@@ -261,5 +476,5 @@ function viewEmbeddedClearFilter () {
 
 /* EXPORT */
 
-export {open, openEmbedded, toggleBox, toggleDone, toggleCancelled, toggleStart, toggleTimer, archive, viewOpenFile, viewRevealTodo, viewFilesOpen, viewFilesCollapse, viewFilesExpand, viewEmbeddedCollapse, viewEmbeddedExpand, viewEmbeddedFilter, viewEmbeddedClearFilter};
+export {open, openEmbedded, toggleBox, toggleDone, toggleCancelled, toggleStart, toggleTimer, archive, exportHtml, viewOpenFile, viewRevealTodo, viewFilesOpen, viewFilesCollapse, viewFilesExpand, viewEmbeddedCollapse, viewEmbeddedExpand, viewEmbeddedFilter, viewEmbeddedClearFilter};
 export {toggleBox as editorToggleBox, toggleDone as editorToggleDone, toggleCancelled as editorToggleCancelled, toggleStart as editorToggleStart, archive as editorArchive}
