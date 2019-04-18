@@ -188,39 +188,75 @@ function exportHtml () {
 
   const textEditor = vscode.window.activeTextEditor;
   const doc = new Document ( textEditor.document );
-               
+        
+  //
+  // Start html document
+  //
   let content = '<html><head></head><body>\n';
-  let obj = doc.getLines();
 
+  //
+  // Get lines
+  //
+  let obj = doc.getLines();
   let lines = obj[0].textEditor._documentData._lines;
 
+  //
+  // Iterate line by line and format with html as necessary
+  //
   for (let i = 0; i < lines.length; i++) {
 
     let line: string = lines[i];
     let fmtd: any = false;
     let idx: number;
 
+    //
+    // If this is a comment, skip
+    //
+    // There is some sort of issue when using the defined regex for the 'comment' and
+    // 'specialTags' cases.  It only works every other time through the loop.  For example:
+    //
+    //     This is a comment
+    //     This is a comment again
+    //     Here is another comment
+    //     ☐ Item 1
+    //     ☐ Item 2
+    //
+    // The regext test will only return true on line 1 and 3.  Line 2 it will return false?????
+    //
     if ( Consts.regexes.comment.test( line ) ) {
       continue;
     }
+    //
+    // Projects
+    //
     else if ( Consts.regexes.project.test( line ) ) {
 
       fmtd = true;
       line = '<font color="' + Consts.colors.project + '">\n' + line;
     }
+    //
+    // If not projects...
+    //
     else {
 
+      //
+      // Cancelled
+      //
       if ( Consts.regexes.todoCancelled.test( line ) ) {
         fmtd = true;
         line = '<font color="#f92672">\n' + line;
       }
+      //
+      // Done/finished
+      //
       else if ( Consts.regexes.todoDone.test( line ) ) {
         fmtd = true;
         line = '<font color="#a6e25b">\n' + line;
       }
 
-      //Consts.colors.tags.background[0]
-
+      //
+      // Created
+      //
       let regexResult = Consts.regexes.tagCreated.exec( line );
       if (regexResult) {
         idx = line.indexOf(')', regexResult.index + 1) + 1;
@@ -243,6 +279,9 @@ function exportHtml () {
         };
       }
 
+      //
+      // Started
+      //
       regexResult = Consts.regexes.tagStarted.exec( line );
       if (regexResult) {
         idx = line.indexOf(')', regexResult.index + 1) + 1;
@@ -265,6 +304,9 @@ function exportHtml () {
         }
       }
 
+      //
+      // Done/finished
+      //
       regexResult = Consts.regexes.tagFinished.exec( line );
       if (regexResult) {
         idx = line.indexOf(')', regexResult.index + 1) + 1;
@@ -287,6 +329,9 @@ function exportHtml () {
         }
       }
       
+      //
+      // Elapsed
+      //
       regexResult = Consts.regexes.tagElapsed.exec( line );
       if (regexResult) {
         idx = line.indexOf(')', regexResult.index + 1) + 1;
@@ -309,6 +354,9 @@ function exportHtml () {
         }
       }
 
+      //
+      // Estimate
+      //
       regexResult = Consts.regexes.tagEstimate.exec( line );
       if (regexResult) {
         idx = line.indexOf(' ', regexResult.index);
@@ -334,32 +382,50 @@ function exportHtml () {
         }
       }
 
-      // This regex does not work, there is a timing issue
-      //regexResult = Consts.regexes.tagEstimate.exec( line );
-      //regexResult = Consts.regexes.tagSpecialNormal.exec( line );
+      //
+      // Special Tags
+      //
+      // There is some sort of issue when using the defined regex for the 'comment' and
+      // 'specialTags' cases.  It only works every other time through the loop.  For example:
+      //
+      //     ☐ Item 1 @low
+      //     ☐ Item 2 @low
+      //     ☐ Item 3 @low
+      //     ☐ Item 4 @low
+      //
+      // The regext test will only return true on line 1 and 3.  Line 2 and 4 it will return false?????
+      //
+      //regexResult = Consts.regexes.tagSpecial.exec( line );
       let specialTagExists = line.indexOf('@low');
       if (specialTagExists === -1) {
         specialTagExists = line.indexOf('@medium');
       }
-      if (specialTagExists === -1) {
+      else if (specialTagExists === -1) {
         specialTagExists = line.indexOf('@high');
       }
-      if (specialTagExists === -1) {
+      else if (specialTagExists === -1) {
         specialTagExists =  line.indexOf('@critical');
       }
+      else if (specialTagExists === -1) {
+        specialTagExists =  line.indexOf('@today');
+      }
       if (specialTagExists !== -1) {
+      //if (regexResult) {
         let tagIdx = 0;
         let tagNames = Consts.tags.names;
         idx = line.indexOf(' ', specialTagExists + 1);
+        //idx = line.indexOf(' ', regexResult.index + 2);
         if (idx === -1) {
           idx = line.length;
         }
         let tagName;
         if (idx !== -1) {
           tagName = line.substring(specialTagExists + 1, idx).trim();
+          //tagName = line.substring(regexResult.index + 2, idx).trim();
         }
         else {
           tagName = line.substring(specialTagExists + 1).trim();
+          //tagName = line.substring(regexResult.index + 2).trim();
         }
         for (let i = 0; i < tagNames.length; i++) {
           
@@ -372,6 +438,7 @@ function exportHtml () {
         if (fmtd === 1) {
           let idx2 = line.indexOf('</font>');
           if (specialTagExists < idx2) {
+          //if (regexResult.index < idx2) {
             fmtd = true;
             line = line.replace('</font>', '');
           }
@@ -379,6 +446,11 @@ function exportHtml () {
         line = line.substring(0, specialTagExists) + (fmtd === true ? '</font>' : '') + 
                 '<font style="background-color:' + Consts.colors.tags.background[tagIdx] + '">\n' + 
                 line.substring(specialTagExists, idx) + '</font>' +  line.substring(idx);
+
+        //line = line.substring(0, regexResult.index + 1) + (fmtd === true ? '</font>' : '') + 
+        //        '<font style="background-color:' + Consts.colors.tags.background[tagIdx] + '">\n' + 
+        //        line.substring(regexResult.index + 1, idx) + '</font>' +  line.substring(idx);
+
         if (fmtd === true) {
           fmtd = 1;
         }

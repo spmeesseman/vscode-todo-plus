@@ -20,11 +20,11 @@ class Document {
 
     if ( _.isString ( res ) ) {
 
-      this.text = res;
+      this.text = res as string;
 
     } else {
 
-      if ( 'document' in res ) { // => vscode.TextEditor
+      if ( 'document' in (res as vscode.TextEditor) ) { // => vscode.TextEditor
 
         this.textEditor = res as vscode.TextEditor; //TSC
         this.textDocument = this.textEditor.document;
